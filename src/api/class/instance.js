@@ -24,6 +24,28 @@ class WhatsAppInstance {
         logger: pino({
             level: config.log.level,
         }),
+        patchMessageBeforeSending: (message) => {
+            const requiresPatch = !!(
+                message.buttonsMessage ||
+                message.templateMessage ||
+                message.listMessage
+            )
+            if (requiresPatch) {
+                message = {
+                    viewOnceMessage: {
+                        message: {
+                            messageContextInfo: {
+                                deviceListMetadataVersion: 2,
+                                deviceListMetadata: {},
+                            },
+                            ...message,
+                        },
+                    },
+                }
+            }
+
+            return message
+        },
     }
     key = ''
     authState
@@ -66,7 +88,7 @@ class WhatsAppInstance {
                 body,
                 instanceKey: key,
             })
-            .catch(() => { })
+            .catch(() => {})
     }
 
     async init() {
@@ -105,9 +127,13 @@ class WhatsAppInstance {
                     this.instance.online = false
                 }
 
-                await this.SendWebhook('connection', {
-                    connection: connection,
-                }, this.key)
+                await this.SendWebhook(
+                    'connection',
+                    {
+                        connection: connection,
+                    },
+                    this.key
+                )
             } else if (connection === 'open') {
                 if (config.mongoose.enabled) {
                     let alreadyThere = await Chat.findOne({
@@ -120,9 +146,13 @@ class WhatsAppInstance {
                 }
                 this.instance.online = true
 
-                await this.SendWebhook('connection', {
-                    connection: connection,
-                }, this.key)
+                await this.SendWebhook(
+                    'connection',
+                    {
+                        connection: connection,
+                    },
+                    this.key
+                )
             }
 
             if (qr) {
@@ -270,28 +300,36 @@ class WhatsAppInstance {
                 if (data.content.find((e) => e.tag === 'offer')) {
                     const content = data.content.find((e) => e.tag === 'offer')
 
-                    await this.SendWebhook('call_offer', {
-                        id: content.attrs['call-id'],
-                        timestamp: parseInt(data.attrs.t),
-                        user: {
-                            id: data.attrs.from,
-                            platform: data.attrs.platform,
-                            platform_version: data.attrs.version,
+                    await this.SendWebhook(
+                        'call_offer',
+                        {
+                            id: content.attrs['call-id'],
+                            timestamp: parseInt(data.attrs.t),
+                            user: {
+                                id: data.attrs.from,
+                                platform: data.attrs.platform,
+                                platform_version: data.attrs.version,
+                            },
                         },
-                    }, this.key)
+                        this.key
+                    )
                 } else if (data.content.find((e) => e.tag === 'terminate')) {
                     const content = data.content.find(
                         (e) => e.tag === 'terminate'
                     )
 
-                    await this.SendWebhook('call_terminate', {
-                        id: content.attrs['call-id'],
-                        user: {
-                            id: data.attrs.from,
+                    await this.SendWebhook(
+                        'call_terminate',
+                        {
+                            id: content.attrs['call-id'],
+                            user: {
+                                id: data.attrs.from,
+                            },
+                            timestamp: parseInt(data.attrs.t),
+                            reason: data.content[0].attrs.reason,
                         },
-                        timestamp: parseInt(data.attrs.t),
-                        reason: data.content[0].attrs.reason,
-                    }, this.key)
+                        this.key
+                    )
                 }
             }
         })
@@ -300,27 +338,39 @@ class WhatsAppInstance {
             //console.log('groups.upsert')
             //console.log(newChat)
             this.createGroupByApp(newChat)
-            await this.SendWebhook('group_created', {
-                data: newChat,
-            }, this.key)
+            await this.SendWebhook(
+                'group_created',
+                {
+                    data: newChat,
+                },
+                this.key
+            )
         })
 
         sock?.ev.on('groups.update', async (newChat) => {
             //console.log('groups.update')
             //console.log(newChat)
             this.updateGroupSubjectByApp(newChat)
-            await this.SendWebhook('group_updated', {
-                data: newChat,
-            }, this.key)
+            await this.SendWebhook(
+                'group_updated',
+                {
+                    data: newChat,
+                },
+                this.key
+            )
         })
 
         sock?.ev.on('group-participants.update', async (newChat) => {
             //console.log('group-participants.update')
             //console.log(newChat)
             this.updateGroupParticipantsByApp(newChat)
-            await this.SendWebhook('group_participants_updated', {
-                data: newChat,
-            }, this.key)
+            await this.SendWebhook(
+                'group_participants_updated',
+                {
+                    data: newChat,
+                },
+                this.key
+            )
         })
     }
 
@@ -427,7 +477,7 @@ class WhatsAppInstance {
                 templateButtons: processButton(data.buttons),
                 text: data.text ?? '',
                 footer: data.footerText ?? '',
-                viewOnce: true
+                viewOnce: true,
             }
         )
         return result
@@ -458,7 +508,7 @@ class WhatsAppInstance {
                 buttonText: data.buttonText,
                 footer: data.description,
                 title: data.title,
-                viewOnce: true
+                viewOnce: true,
             }
         )
         return result
@@ -477,7 +527,7 @@ class WhatsAppInstance {
                 caption: data.text,
                 templateButtons: processButton(data.buttons),
                 mimetype: data.mimeType,
-                viewOnce: true
+                viewOnce: true,
             }
         )
         return result
@@ -883,7 +933,7 @@ class WhatsAppInstance {
             const key = {
                 remoteJid: msgObj.remoteJid,
                 id: msgObj.id,
-                participant: msgObj?.participant // required when reading a msg from group
+                participant: msgObj?.participant, // required when reading a msg from group
             }
             const res = await this.instance.sock?.readMessages([key])
             return res
@@ -897,8 +947,8 @@ class WhatsAppInstance {
             const reactionMessage = {
                 react: {
                     text: emoji, // use an empty string to remove the reaction
-                    key: key
-                }
+                    key: key,
+                },
             }
             const res = await this.instance.sock?.sendMessage(
                 this.getWhatsAppId(id),
