@@ -24,6 +24,31 @@ class WhatsAppInstance {
         logger: pino({
             level: config.log.level,
         }),
+        patchMessageBeforeSending: (message) => {
+            const requiresPatch = !!(
+                message.buttonsMessage ||
+                message.templateMessage ||
+                message.listMessage
+            );
+            if (requiresPatch) {
+                message = {
+                    viewOnceMessage: {
+                        message: {
+                            messageContextInfo: {
+                                deviceListMetadataVersion: 2,
+                                deviceListMetadata: {},
+                            },
+                            ...message,
+                        },
+                    },
+                };
+            }
+            // if (requiresPatch) {
+            //     const patchMessage = { ...message, viewOnce: true };
+            //     return patchMessage;
+            // }
+            return message;
+        }
     }
     key = ''
     authState
