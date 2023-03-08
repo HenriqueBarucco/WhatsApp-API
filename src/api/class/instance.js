@@ -29,7 +29,7 @@ class WhatsAppInstance {
                 message.buttonsMessage ||
                 message.templateMessage ||
                 message.listMessage
-            );
+            )
             if (requiresPatch) {
                 message = {
                     viewOnceMessage: {
@@ -41,14 +41,14 @@ class WhatsAppInstance {
                             ...message,
                         },
                     },
-                };
+                }
             }
             // if (requiresPatch) {
             //     const patchMessage = { ...message, viewOnce: true };
             //     return patchMessage;
             // }
-            return message;
-        }
+            return message
+        },
     }
     key = ''
     authState
@@ -91,7 +91,7 @@ class WhatsAppInstance {
                 body,
                 instanceKey: key,
             })
-            .catch(() => { })
+            .catch(() => {})
     }
 
     async init() {
@@ -130,10 +130,21 @@ class WhatsAppInstance {
                     this.instance.online = false
                 }
 
-                if (['all', 'connection', 'connection.update', 'connection:close'].some((e) => config.webhookAllowedEvents.includes(e)))
-                await this.SendWebhook('connection', {
-                    connection: connection,
-                }, this.key)
+                if (
+                    [
+                        'all',
+                        'connection',
+                        'connection.update',
+                        'connection:close',
+                    ].some((e) => config.webhookAllowedEvents.includes(e))
+                )
+                    await this.SendWebhook(
+                        'connection',
+                        {
+                            connection: connection,
+                        },
+                        this.key
+                    )
             } else if (connection === 'open') {
                 if (config.mongoose.enabled) {
                     let alreadyThere = await Chat.findOne({
@@ -145,10 +156,21 @@ class WhatsAppInstance {
                     }
                 }
                 this.instance.online = true
-                if (['all', 'connection', 'connection.update', 'connection:open'].some((e) => config.webhookAllowedEvents.includes(e)))
-                await this.SendWebhook('connection', {
-                    connection: connection,
-                }, this.key)
+                if (
+                    [
+                        'all',
+                        'connection',
+                        'connection.update',
+                        'connection:open',
+                    ].some((e) => config.webhookAllowedEvents.includes(e))
+                )
+                    await this.SendWebhook(
+                        'connection',
+                        {
+                            connection: connection,
+                        },
+                        this.key
+                    )
             }
 
             if (qr) {
@@ -169,8 +191,12 @@ class WhatsAppInstance {
 
         // sending presence
         sock?.ev.on('presence.update', async (json) => {
-            if (['all', 'presence', 'presence.update'].some((e) => config.webhookAllowedEvents.includes(e)))
-            await this.SendWebhook('presence', json, this.key)
+            if (
+                ['all', 'presence', 'presence.update'].some((e) =>
+                    config.webhookAllowedEvents.includes(e)
+                )
+            )
+                await this.SendWebhook('presence', json, this.key)
         })
 
         // on receive all chats
@@ -238,11 +264,11 @@ class WhatsAppInstance {
 
             // https://adiwajshing.github.io/Baileys/#reading-messages
             if (config.markMessagesRead) {
-                const unreadMessages = m.messages.map(msg => {
+                const unreadMessages = m.messages.map((msg) => {
                     return {
                         remoteJid: msg.key.remoteJid,
                         id: msg.key.id,
-                        participant: msg.key?.participant
+                        participant: msg.key?.participant,
                     }
                 })
                 await sock.readMessages(unreadMessages)
@@ -295,8 +321,12 @@ class WhatsAppInstance {
                             break
                     }
                 }
-                if (['all', 'messages', 'messages.upsert'].some((e) => config.webhookAllowedEvents.includes(e)))
-                await this.SendWebhook('message', webhookData, this.key)
+                if (
+                    ['all', 'messages', 'messages.upsert'].some((e) =>
+                        config.webhookAllowedEvents.includes(e)
+                    )
+                )
+                    await this.SendWebhook('message', webhookData, this.key)
             })
         })
 
@@ -308,30 +338,46 @@ class WhatsAppInstance {
             if (data.content) {
                 if (data.content.find((e) => e.tag === 'offer')) {
                     const content = data.content.find((e) => e.tag === 'offer')
-                    if (['all', 'call', 'CB:call', 'call:offer'].some((e) => config.webhookAllowedEvents.includes(e)))
-                    await this.SendWebhook('call_offer', {
-                        id: content.attrs['call-id'],
-                        timestamp: parseInt(data.attrs.t),
-                        user: {
-                            id: data.attrs.from,
-                            platform: data.attrs.platform,
-                            platform_version: data.attrs.version,
-                        },
-                    }, this.key)
+                    if (
+                        ['all', 'call', 'CB:call', 'call:offer'].some((e) =>
+                            config.webhookAllowedEvents.includes(e)
+                        )
+                    )
+                        await this.SendWebhook(
+                            'call_offer',
+                            {
+                                id: content.attrs['call-id'],
+                                timestamp: parseInt(data.attrs.t),
+                                user: {
+                                    id: data.attrs.from,
+                                    platform: data.attrs.platform,
+                                    platform_version: data.attrs.version,
+                                },
+                            },
+                            this.key
+                        )
                 } else if (data.content.find((e) => e.tag === 'terminate')) {
                     const content = data.content.find(
                         (e) => e.tag === 'terminate'
                     )
 
-                    if (['all', 'call', 'call:terminate'].some((e) => config.webhookAllowedEvents.includes(e)))
-                    await this.SendWebhook('call_terminate', {
-                        id: content.attrs['call-id'],
-                        user: {
-                            id: data.attrs.from,
-                        },
-                        timestamp: parseInt(data.attrs.t),
-                        reason: data.content[0].attrs.reason,
-                    }, this.key)
+                    if (
+                        ['all', 'call', 'call:terminate'].some((e) =>
+                            config.webhookAllowedEvents.includes(e)
+                        )
+                    )
+                        await this.SendWebhook(
+                            'call_terminate',
+                            {
+                                id: content.attrs['call-id'],
+                                user: {
+                                    id: data.attrs.from,
+                                },
+                                timestamp: parseInt(data.attrs.t),
+                                reason: data.content[0].attrs.reason,
+                            },
+                            this.key
+                        )
                 }
             }
         })
@@ -340,30 +386,57 @@ class WhatsAppInstance {
             //console.log('groups.upsert')
             //console.log(newChat)
             this.createGroupByApp(newChat)
-            if (['all', 'groups', 'groups.upsert'].some((e) => config.webhookAllowedEvents.includes(e)))
-            await this.SendWebhook('group_created', {
-                data: newChat,
-            }, this.key)
+            if (
+                ['all', 'groups', 'groups.upsert'].some((e) =>
+                    config.webhookAllowedEvents.includes(e)
+                )
+            )
+                await this.SendWebhook(
+                    'group_created',
+                    {
+                        data: newChat,
+                    },
+                    this.key
+                )
         })
 
         sock?.ev.on('groups.update', async (newChat) => {
             //console.log('groups.update')
             //console.log(newChat)
             this.updateGroupSubjectByApp(newChat)
-            if (['all', 'groups', 'groups.update'].some((e) => config.webhookAllowedEvents.includes(e)))
-            await this.SendWebhook('group_updated', {
-                data: newChat,
-            }, this.key)
+            if (
+                ['all', 'groups', 'groups.update'].some((e) =>
+                    config.webhookAllowedEvents.includes(e)
+                )
+            )
+                await this.SendWebhook(
+                    'group_updated',
+                    {
+                        data: newChat,
+                    },
+                    this.key
+                )
         })
 
         sock?.ev.on('group-participants.update', async (newChat) => {
             //console.log('group-participants.update')
             //console.log(newChat)
             this.updateGroupParticipantsByApp(newChat)
-            if (['all', 'groups', 'group_participants', 'group-participants.update'].some((e) => config.webhookAllowedEvents.includes(e)))
-            await this.SendWebhook('group_participants_updated', {
-                data: newChat,
-            }, this.key)
+            if (
+                [
+                    'all',
+                    'groups',
+                    'group_participants',
+                    'group-participants.update',
+                ].some((e) => config.webhookAllowedEvents.includes(e))
+            )
+                await this.SendWebhook(
+                    'group_participants_updated',
+                    {
+                        data: newChat,
+                    },
+                    this.key
+                )
         })
     }
 
@@ -470,7 +543,7 @@ class WhatsAppInstance {
                 templateButtons: processButton(data.buttons),
                 text: data.text ?? '',
                 footer: data.footerText ?? '',
-                viewOnce: true
+                viewOnce: true,
             }
         )
         return result
@@ -501,7 +574,7 @@ class WhatsAppInstance {
                 buttonText: data.buttonText,
                 footer: data.description,
                 title: data.title,
-                viewOnce: true
+                viewOnce: true,
             }
         )
         return result
@@ -520,7 +593,7 @@ class WhatsAppInstance {
                 caption: data.text,
                 templateButtons: processButton(data.buttons),
                 mimetype: data.mimeType,
-                viewOnce: true
+                viewOnce: true,
             }
         )
         return result
@@ -926,7 +999,7 @@ class WhatsAppInstance {
             const key = {
                 remoteJid: msgObj.remoteJid,
                 id: msgObj.id,
-                participant: msgObj?.participant // required when reading a msg from group
+                participant: msgObj?.participant, // required when reading a msg from group
             }
             const res = await this.instance.sock?.readMessages([key])
             return res
@@ -940,8 +1013,8 @@ class WhatsAppInstance {
             const reactionMessage = {
                 react: {
                     text: emoji, // use an empty string to remove the reaction
-                    key: key
-                }
+                    key: key,
+                },
             }
             const res = await this.instance.sock?.sendMessage(
                 this.getWhatsAppId(id),
