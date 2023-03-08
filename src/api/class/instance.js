@@ -543,7 +543,9 @@ class WhatsAppInstance {
                 templateButtons: processButton(data.buttons),
                 text: data.text ?? '',
                 footer: data.footerText ?? '',
-                viewOnce: true,
+            },
+            {
+                ephemeralExpiration: 604800
             }
         )
         return result
