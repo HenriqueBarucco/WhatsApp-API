@@ -31,17 +31,36 @@
         </div>
         <div class="container">
             <div class="row">
-                <button
-                    id="btn-qr"
-                    class="btn btn-primary"
-                    type="button"
-                    onclick="generateQR()"
-                >
-                    Gerar QR
-                </button>
+                <div class="col-25">
+                    <div class="input-group mb-3">
+                        <input
+                            id="token"
+                            type="text"
+                            class="form-control"
+                            placeholder="Token"
+                            aria-label="Token"
+                            aria-describedby="Token"
+                        />
+                        <button
+                            id="btn-qr"
+                            class="btn btn-primary"
+                            type="button"
+                            onclick="generateQR()"
+                        >
+                            Gerar QR
+                        </button>
+                        <button
+                            class="btn btn-primary"
+                            type="button"
+                            onclick="showInfo()"
+                        >
+                            Informações
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="mt-3 d-flex justify-content-center">
+        <div class="d-flex justify-content-center">
             <div class="card" style="width: 18rem">
                 <ul
                     class="d-flex justify-content-center list-group list-group-flush"
@@ -51,13 +70,8 @@
         </div>
     </body>
     <script>
-        showInfo()
-        setInterval(() => {
-            showInfo()
-        }, 3000)
-
         async function generateQR() {
-            const token = `<%= token %>`
+            const token = document.getElementById('token').value
             const btnQr = document.getElementById('btn-qr')
 
             if (token == undefined || token == '') {
@@ -92,9 +106,8 @@
         }
 
         async function showInfo() {
-            const token = '<%= token %>'
+            const token = document.getElementById('token').value
             const infoBox = document.getElementById('info-box')
-            const btn = document.getElementById('btn-qr')
 
             if (token == undefined || token == '') {
                 return alert('Insira um Token!')
@@ -105,9 +118,14 @@
             let jsonInfo = await responseInfo.json()
 
             if (responseInfo.status != 200) {
-                return (infoBox.innerHTML = `
-            <li class="d-flex justify-content-center list-group-item">⚠️ Instância não cadastrada</li>
-        `)
+                infoBox.innerHTML = `
+      <li class="d-flex justify-content-center list-group-item">⚠️ Inválido</li>
+      `
+
+                setTimeout(() => {
+                    infoBox.innerHTML = ``
+                }, 10000)
+                return
             }
 
             if (!jsonInfo.error) {
@@ -133,39 +151,37 @@
 
                 connected = await jsonInfo.instance_data.phone_connected
 
-                if (connected) {
-                    btn.hidden = 'true'
-
-                    return (infoBox.innerHTML = `
-            <li class="d-flex justify-content-center list-group-item">${
-                user.name || token
-            }</li>
-            ${
-                user.phone
-                    ? `<li class="d-flex justify-content-center list-group-item">${user.phone}</li>`
-                    : ''
-            }
-            <li class="d-flex justify-content-center list-group-item">${
-                connected ? '🟢 Conectado' : '🔴 Desconectado'
-            }</li>
-            ${
-                connected
-                    ? `<li class="d-flex justify-content-center list-group-item"><button type="button" class="btn btn-danger" onclick="logout()">Desconectar</button></li>`
-                    : ''
-            }
-        `)
-                } else {
-                    btn.removeAttribute('hidden')
-                }
+                infoBox.innerHTML = `
+        <li class="d-flex justify-content-center list-group-item">${
+            user.name || token
+        }</li>
+        ${
+            user.phone
+                ? `<li class="d-flex justify-content-center list-group-item">${user.phone}</li>`
+                : ''
+        }
+        <li class="d-flex justify-content-center list-group-item">${
+            connected ? '🟢 Conectado' : '🔴 Desconectado'
+        }</li>
+        ${
+            connected
+                ? `<li class="d-flex justify-content-center list-group-item"><button type="button" class="btn btn-danger" onclick="logout()">Desconectar</button></li>`
+                : ''
+        }
+      `
+                setTimeout(() => {
+                    infoBox.innerHTML = ``
+                }, 15000)
+                return
             }
         }
 
         async function logout() {
-            const token = '<%= token %>'
+            const token = document.getElementById('token').value
             const infoBox = document.getElementById('info-box')
 
             if (token == undefined || token == '') {
-                return alert('Insira um Token YouDelivery!')
+                return alert('Insira um Token!')
             }
 
             const responseInfo = await fetch(`/instance/logout?key=${token}`, {
@@ -187,7 +203,7 @@
 
                 setTimeout(() => {
                     infoBox.innerHTML = ``
-                }, 5000)
+                }, 10000)
             }
         }
     </script>

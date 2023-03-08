@@ -3,6 +3,11 @@ const config = require('../../config/config')
 function tokenVerification(req, res, next) {
     const bearer = req.headers.authorization
     const token = bearer?.slice(7)?.toString()
+
+    if (['/instance/qr', '/instance/admin'].some(item => req.path.includes(item))) {
+        next()
+    }
+
     if (!token) {
         return res.status(403).send({
             error: true,

@@ -29,13 +29,23 @@ exports.init = async (req, res) => {
 
 exports.qr = async (req, res) => {
     try {
-        const qrcode = await WhatsAppInstances[req.query.key]?.instance.qr
+        const token = req.query['token']?.toString()
         res.render('qrcode', {
-            qrcode: qrcode,
+            token,
         })
     } catch {
         res.json({
-            qrcode: '',
+            token: '',
+        })
+    }
+}
+
+exports.admin = async (req, res) => {
+    try {
+        res.render('admin')
+    } catch {
+        res.json({
+            admin: '',
         })
     }
 }

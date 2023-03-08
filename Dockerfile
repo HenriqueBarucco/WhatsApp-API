@@ -14,4 +14,4 @@ RUN yarn install
 USER node
 EXPOSE ${PORT}
 
-CMD yarn start
+CMD yarn dev --cache-folder
