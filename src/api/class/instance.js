@@ -24,12 +24,13 @@ class WhatsAppInstance {
         logger: pino({
             level: config.log.level,
         }),
+        syncFullHistory: false,
         patchMessageBeforeSending: (message) => {
             const requiresPatch = !!(
-                message.buttonsMessage ||
-                message.templateMessage ||
-                message.listMessage
-            )
+                message.buttonsMessage 
+                || message.templateMessage
+                || message.listMessage
+            );
             if (requiresPatch) {
                 message = {
                     viewOnceMessage: {
@@ -41,14 +42,21 @@ class WhatsAppInstance {
                             ...message,
                         },
                     },
-                }
+                };
             }
-            // if (requiresPatch) {
-            //     const patchMessage = { ...message, viewOnce: true };
-            //     return patchMessage;
-            // }
-            return message
+
+            return message;
         },
+        getMessage: async (key) => {
+            if (store) {
+                const msg = await store.loadMessage(key.remoteJid, key.id)
+                return msg.message || undefined
+            }
+            return {
+                conversation: "Message not found"
+            }
+        },
+        }
     }
     key = ''
     authState
