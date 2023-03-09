@@ -56,7 +56,6 @@ class WhatsAppInstance {
                 conversation: "Message not found"
             }
         },
-        }
     }
     key = ''
     authState
