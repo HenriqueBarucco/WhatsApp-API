@@ -545,7 +545,7 @@ class WhatsAppInstance {
                 footer: data.footerText ?? '',
             },
             {
-                ephemeralExpiration: 604800
+                ephemeralExpiration: 604800,
             }
         )
         return result
